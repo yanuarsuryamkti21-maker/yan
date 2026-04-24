@@ -19,31 +19,9 @@ async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: 'custom'
+      appType: 'spa' // Vite handles index.html and SPA fallback
     });
     app.use(vite.middlewares);
-
-    app.all('*', async (req, res, next) => {
-      // API routes should be handled elsewhere or returns 404
-      if (req.originalUrl.startsWith('/api')) {
-        return next();
-      }
-
-      // If it looks like a static file (has an extension), let Vite middleware handle it (or let it 404)
-      if (path.extname(req.path)) {
-        return next();
-      }
-
-      try {
-        const url = req.originalUrl;
-        const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
-        const html = await vite.transformIndexHtml(url, template);
-        res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
-      } catch (e) {
-        vite.ssrFixStacktrace(e);
-        next(e);
-      }
-    });
   } else {
     const distPath = path.resolve(__dirname, 'dist');
     app.use(express.static(distPath));

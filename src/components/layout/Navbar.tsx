@@ -1,10 +1,12 @@
 import React from 'react';
-import { Bell, Search, LogOut } from 'lucide-react';
+import { Bell, Search, LogOut, Menu } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useUIStore } from '../../store/useUIStore';
 import { useNavigate } from 'react-router-dom';
 
 export default function Navbar() {
   const { user, setUser } = useAuthStore();
+  const { toggleSidebar } = useUIStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -13,12 +15,21 @@ export default function Navbar() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-border-subtle sticky top-0 z-10 px-8 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <span className="text-slate-500 text-sm">Selamat Datang, </span>
-        <span className="font-bold text-slate-800 text-sm">
-          {user?.name || 'User'} {user?.role ? `(${user.role.toUpperCase()})` : ''}
-        </span>
+    <header className="h-16 bg-white border-b border-border-subtle sticky top-0 z-10 px-4 md:px-8 flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={toggleSidebar}
+          className="lg:hidden p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        
+        <div className="hidden sm:flex items-center gap-2">
+          <span className="text-slate-500 text-sm">Selamat Datang, </span>
+          <span className="font-bold text-slate-800 text-sm">
+            {user?.name || 'User'} {user?.role ? `(${user.role.toUpperCase()})` : ''}
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
