@@ -11,7 +11,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../../lib/utils';
+import { cn } from './lib/utils';
 
 interface Question {
   id: string;

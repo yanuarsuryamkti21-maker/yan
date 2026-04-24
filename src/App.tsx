@@ -6,7 +6,7 @@ import Dashboard from './pages/Dashboard';
 import ExamList from './pages/ExamList';
 import TakeExam from './pages/TakeExam';
 import Results from './pages/Results';
-import QuestionManagement from './pages/admin/QuestionManagement';
+import QuestionManagement from './QuestionManagement';
 import AppLayout from './components/layout/AppLayout';
 
 // Other pages (stubs)

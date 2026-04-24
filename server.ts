@@ -16,41 +16,48 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  // Perkuat penanganan 404 dengan rute catch-all yang lebih cerdas
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
+    
+    // Middleware logging untuk debugging
+    app.use((req, res, next) => {
+      console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+      next();
+    });
+
     app.use(vite.middlewares);
     
-    // Catch-all for development to ensure SPA routing works
+    // Rute SPA untuk Development: Melayani index.html untuk semua navigasi non-API
     app.get("*", async (req, res, next) => {
-      // Don't intercept API routes or standard static files
-      if (req.originalUrl.startsWith("/api") || req.originalUrl.includes(".")) {
+      // Kecualikan rute API
+      if (req.path.startsWith("/api")) {
         return next();
       }
 
-      const url = req.originalUrl;
+      // Pastikan rute tidak terlihat seperti file statis (ekstensi file)
+      const isFile = req.path.split("/").pop()?.includes(".");
+      if (isFile) {
+        return next();
+      }
+
       try {
-        let template = fs.readFileSync(
-          path.resolve(__dirname, "index.html"),
-          "utf-8"
-        );
-        template = await vite.transformIndexHtml(url, template);
-        res.status(200).set({ "Content-Type": "text/html" }).end(template);
+        const template = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
+        const html = await vite.transformIndexHtml(req.originalUrl, template);
+        res.status(200).set({ "Content-Type": "text/html" }).end(html);
       } catch (e) {
         vite.ssrFixStacktrace(e as Error);
         next(e);
       }
     });
   } else {
-    // Production: serve static files from dist
+    // Mode produksi: rute sakti versi statis
     const distPath = path.resolve(__dirname, "dist");
-    
-    // Serve static assets first
     app.use(express.static(distPath));
-
-    // Fallback all other routes to index.html for React Router
+    
     app.get("*", (req, res) => {
       res.sendFile(path.resolve(distPath, "index.html"));
     });
