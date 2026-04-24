@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 
 export default function AppLayout() {
   const { isAuthenticated, isLoading } = useAuthStore();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -31,6 +32,7 @@ export default function AppLayout() {
         <div className="p-8 flex-1">
           <AnimatePresence mode="wait">
             <motion.div
+              key={location.pathname}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
