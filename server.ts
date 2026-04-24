@@ -25,8 +25,8 @@ async function startServer() {
     
     // Catch-all for development to ensure SPA routing works
     app.get("*", async (req, res, next) => {
-      // Skip for static files and standard Vite paths
-      if (req.path.includes(".") || req.path.startsWith("/@") || req.path.startsWith("/node_modules")) {
+      // Don't intercept API routes or standard static files
+      if (req.originalUrl.startsWith("/api") || req.originalUrl.includes(".")) {
         return next();
       }
 
@@ -45,22 +45,14 @@ async function startServer() {
     });
   } else {
     // Production: serve static files from dist
-    const distPath = path.resolve(process.cwd(), "dist");
+    const distPath = path.resolve(__dirname, "dist");
     
-    // Ensure dist exists before serving
-    if (!fs.existsSync(distPath)) {
-      console.error(`Production dist folder not found at ${distPath}. Running build might be necessary.`);
-    }
+    // Serve static assets first
+    app.use(express.static(distPath));
 
-    app.use(express.static(distPath, { index: false })); // index: false to let catch-all handle it
-
+    // Fallback all other routes to index.html for React Router
     app.get("*", (req, res) => {
-      const indexPath = path.join(distPath, "index.html");
-      if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        res.status(404).send("Application not built. Please run build first.");
-      }
+      res.sendFile(path.resolve(distPath, "index.html"));
     });
   }
 
