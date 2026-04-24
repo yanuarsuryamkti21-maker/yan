@@ -2,6 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,14 +25,13 @@ async function startServer() {
     
     // Catch-all for development to ensure SPA routing works
     app.get("*", async (req, res, next) => {
-      // Skip for static files and HMR - Vite middleware usually handles these
-      if (req.path.includes(".") || req.path.includes("@vite") || req.path.includes("node_modules")) {
+      // Skip for static files and standard Vite paths
+      if (req.path.includes(".") || req.path.startsWith("/@") || req.path.startsWith("/node_modules")) {
         return next();
       }
 
       const url = req.originalUrl;
       try {
-        const fs = await import("fs");
         let template = fs.readFileSync(
           path.resolve(__dirname, "index.html"),
           "utf-8"
@@ -44,15 +44,28 @@ async function startServer() {
       }
     });
   } else {
-    const distPath = path.resolve(__dirname, "dist");
-    app.use(express.static(distPath));
+    // Production: serve static files from dist
+    const distPath = path.resolve(process.cwd(), "dist");
+    
+    // Ensure dist exists before serving
+    if (!fs.existsSync(distPath)) {
+      console.error(`Production dist folder not found at ${distPath}. Running build might be necessary.`);
+    }
+
+    app.use(express.static(distPath, { index: false })); // index: false to let catch-all handle it
+
     app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+      const indexPath = path.join(distPath, "index.html");
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send("Application not built. Please run build first.");
+      }
     });
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
   });
 }
 
