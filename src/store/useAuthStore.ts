@@ -9,14 +9,27 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: false, // Default to false to avoid potential hangs during initial load
-  setUser: (user) => set({ 
-    user, 
-    isAuthenticated: !!user,
-    isLoading: false 
-  }),
-  setLoading: (loading) => set({ isLoading: loading }),
-}));
+export const useAuthStore = create<AuthState>((set) => {
+  // Try to load user from localStorage
+  const savedUser = localStorage.getItem('cbt_user');
+  const initialUser = savedUser ? JSON.parse(savedUser) : null;
+
+  return {
+    user: initialUser,
+    isAuthenticated: !!initialUser,
+    isLoading: false,
+    setUser: (user) => {
+      if (user) {
+        localStorage.setItem('cbt_user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('cbt_user');
+      }
+      set({ 
+        user, 
+        isAuthenticated: !!user,
+        isLoading: false 
+      });
+    },
+    setLoading: (loading) => set({ isLoading: loading }),
+  };
+});

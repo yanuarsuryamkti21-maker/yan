@@ -27,40 +27,45 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    // Mock login logic for preview stability
-    setTimeout(() => {
+    const performLogin = () => {
+      let loggedUser = null;
       if (email === 'admin@gmail.com' && password === 'admin123') {
-        setUser({
+        loggedUser = {
           id: '1',
           name: 'Administrator',
           email: 'admin@gmail.com',
           role: 'admin',
           createdAt: new Date().toISOString()
-        });
-        navigate('/app/dashboard');
+        };
       } else if (email === 'guru@gmail.com' && password === 'guru123') {
-        setUser({
+        loggedUser = {
           id: '2',
           name: 'Bpk. Budi Santoso',
           email: 'guru@gmail.com',
           role: 'guru',
           createdAt: new Date().toISOString()
-        });
-        navigate('/app/dashboard');
+        };
       } else if (email === 'siswa@gmail.com' && password === 'siswa123') {
-        setUser({
+        loggedUser = {
           id: '3',
           name: 'Ahmad Fauzi',
           email: 'siswa@gmail.com',
           role: 'siswa',
           createdAt: new Date().toISOString()
-        });
-        navigate('/app/dashboard');
+        };
+      }
+
+      if (loggedUser) {
+        setUser(loggedUser);
+        navigate('/app/dashboard', { replace: true });
       } else {
         setError('Email atau password salah. Coba: admin@gmail.com / admin123');
       }
       setIsLoading(false);
-    }, 1500);
+    };
+
+    // Keep a short delay for UX but make it faster
+    setTimeout(performLogin, 500);
   };
 
   return (

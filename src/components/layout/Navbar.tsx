@@ -16,7 +16,9 @@ export default function Navbar() {
     <header className="h-16 bg-white border-b border-border-subtle sticky top-0 z-10 px-8 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <span className="text-slate-500 text-sm">Selamat Datang, </span>
-        <span className="font-bold text-slate-800 text-sm">{user?.name} (XII-TKJ-1)</span>
+        <span className="font-bold text-slate-800 text-sm">
+          {user?.name || 'User'} {user?.role ? `(${user.role.toUpperCase()})` : ''}
+        </span>
       </div>
 
       <div className="flex items-center gap-4">

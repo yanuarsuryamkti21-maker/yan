@@ -10,7 +10,6 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
-import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
@@ -27,16 +26,13 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((stat, i) => (
-          <motion.div
+          <div
             key={stat.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
             className="stat-card-polished group flex flex-col"
           >
             <p className="text-[12px] text-slate-500 font-semibold uppercase tracking-wider mb-2">{stat.label}</p>
             <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-          </motion.div>
+          </div>
         ))}
       </div>
 
