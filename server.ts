@@ -11,42 +11,43 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Basic API check
+  // Use JSON body parser
+  app.use(express.json());
+
+  // Static files logging in development
+  if (process.env.NODE_ENV !== "production") {
+    app.use((req, res, next) => {
+      if (!req.url.includes("node_modules") && !req.url.includes("@vite")) {
+        console.log(`[DEV] ${req.method} ${req.url}`);
+      }
+      next();
+    });
+  }
+
+  // API routes go here
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
+    res.json({ status: "ok", mode: process.env.NODE_ENV || 'development' });
   });
 
-  // Perkuat penanganan 404 dengan rute catch-all yang lebih cerdas
   if (process.env.NODE_ENV !== "production") {
+    // Development mode using Vite middleware
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
-    
-    // Middleware logging untuk debugging
-    app.use((req, res, next) => {
-      console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-      next();
-    });
-
     app.use(vite.middlewares);
-    
-    // Rute SPA untuk Development: Melayani index.html untuk semua navigasi non-API
-    app.get("*", async (req, res, next) => {
-      // Kecualikan rute API
-      if (req.path.startsWith("/api")) {
-        return next();
-      }
 
-      // Pastikan rute tidak terlihat seperti file statis (ekstensi file)
-      const isFile = req.path.split("/").pop()?.includes(".");
-      if (isFile) {
+    // Development catch-all: serve index.html for SPA routes
+    app.get("*", async (req, res, next) => {
+      // Skip API and files with extensions
+      if (req.path.startsWith("/api") || req.path.includes(".")) {
         return next();
       }
 
       try {
+        const url = req.originalUrl;
         const template = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
-        const html = await vite.transformIndexHtml(req.originalUrl, template);
+        const html = await vite.transformIndexHtml(url, template);
         res.status(200).set({ "Content-Type": "text/html" }).end(html);
       } catch (e) {
         vite.ssrFixStacktrace(e as Error);
@@ -54,11 +55,18 @@ async function startServer() {
       }
     });
   } else {
-    // Mode produksi: rute sakti versi statis
+    // Production mode
     const distPath = path.resolve(__dirname, "dist");
-    app.use(express.static(distPath));
     
+    // Serve static files from dist folder
+    app.use(express.static(distPath));
+
+    // Production catch-all: always serve index.html for SPA routes
     app.get("*", (req, res) => {
+      // Don't intercept API routes that weren't caught above
+      if (req.path.startsWith("/api")) {
+        return res.status(404).json({ error: "API route not found" });
+      }
       res.sendFile(path.resolve(distPath, "index.html"));
     });
   }
