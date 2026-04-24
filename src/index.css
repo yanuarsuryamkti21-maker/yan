@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #DC2626;
+  --color-primary-dark: #B91C1C;
+  --color-bg-main: #F8FAFC;
+  --color-sidebar: #111827;
+  --color-text-main: #1E293B;
+  --color-border-subtle: #E2E8F0;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-bg-main text-text-main antialiased;
+  }
+}
+
+@layer components {
+  .card-polished {
+    @apply bg-white rounded-xl border border-border-subtle shadow-sm overflow-hidden;
+  }
+  
+  .sidebar-nav-item {
+    @apply px-6 py-3 flex items-center gap-3 text-sm font-medium text-slate-400 border-l-4 border-transparent transition-all;
+  }
+  
+  .sidebar-nav-item.active {
+    @apply bg-white/5 text-white border-l-primary;
+  }
+
+  .stat-card-polished {
+    @apply bg-white p-5 rounded-xl border border-border-subtle shadow-sm;
+  }
+
+  .btn-primary-polished {
+    @apply bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors;
+  }
+}
+
+.glass {
+  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-sm;
+}
