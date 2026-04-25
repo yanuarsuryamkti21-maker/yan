@@ -18,6 +18,7 @@ export default function TakeExam() {
   const { user } = useAuthStore();
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [direction, setDirection] = useState(0); // 1 for next, -1 for prev
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [timeLeft, setTimeLeft] = useState(3600); // 60 minutes in seconds
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,11 +79,34 @@ export default function TakeExam() {
     setAnswers(prev => ({ ...prev, [currentQuestion]: option }));
   };
 
+  const handleNavigate = (newIdx: number) => {
+    if (newIdx < 0 || newIdx >= questions.length) return;
+    setDirection(newIdx > currentQuestion ? 1 : -1);
+    setCurrentQuestion(newIdx);
+  };
+
   const handleSubmit = () => {
     setIsSubmitting(true);
     setTimeout(() => {
       navigate('/app/hasil');
     }, 2000);
+  };
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 100 : -100,
+      opacity: 0,
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 100 : -100,
+      opacity: 0,
+    }),
   };
 
   if (isSubmitting) {
@@ -96,15 +120,15 @@ export default function TakeExam() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8 pb-10">
       {/* Header Panel */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm sticky top-24 z-10">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm sticky top-2 z-30 transition-all">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center font-bold text-primary border border-primary/10">
             {currentQuestion + 1}
           </div>
           <div>
-            <h2 className="font-bold text-slate-900">Pertanyaan Ke-{currentQuestion + 1}</h2>
+            <h2 className="font-bold text-slate-900 truncate max-w-[200px] md:max-w-none">Pertanyaan Ke-{currentQuestion + 1}</h2>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sisa {questions.length - currentQuestion - 1} Soal Lagi</p>
           </div>
         </div>
@@ -119,44 +143,62 @@ export default function TakeExam() {
 
         <button 
           onClick={() => setShowConfirm(true)}
-          className="px-6 py-3 bg-emerald-500 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-emerald-600 shadow-lg shadow-emerald-200 transition-all"
+          className="px-6 py-3 bg-emerald-500 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-600 shadow-lg shadow-emerald-200 transition-all active:scale-95"
         >
           <Send className="w-4 h-4" />
-          Selesaikan Ujian
+          <span className="hidden sm:inline">Selesaikan Ujian</span>
+          <span className="sm:hidden text-sm">Selesai</span>
         </button>
       </div>
 
       <div className="grid lg:grid-cols-4 gap-8">
         {/* Main Question Area */}
-        <div className="lg:col-span-3 space-y-6">
-          <AnimatePresence mode="wait">
+        <div className="lg:col-span-3 space-y-6 overflow-hidden">
+          <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentQuestion}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="bg-white border border-slate-100 rounded-[2.5rem] p-10 shadow-sm"
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 }
+              }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={1}
+              onDragEnd={(e, { offset, velocity }) => {
+                const swipe = Math.abs(offset.x) > 50 && Math.abs(velocity.x) > 500;
+                if (swipe && offset.x > 0 && currentQuestion > 0) {
+                  handleNavigate(currentQuestion - 1);
+                } else if (swipe && offset.x < 0 && currentQuestion < questions.length - 1) {
+                  handleNavigate(currentQuestion + 1);
+                }
+              }}
+              className="bg-white border border-slate-100 rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-sm cursor-grab active:cursor-grabbing"
             >
               <div className="prose prose-slate max-w-none mb-10">
-                <p className="text-xl font-bold text-slate-800 leading-relaxed">
+                <p className="text-lg md:text-xl font-bold text-slate-800 leading-relaxed md:leading-relaxed">
                   {questions[currentQuestion].text}
                 </p>
               </div>
 
-              <div className="grid gap-4">
+              <div className="grid gap-3 md:gap-4">
                 {questions[currentQuestion].options.map((option) => (
                   <button
                     key={option.key}
                     onClick={() => handleSelect(option.key)}
                     className={cn(
-                      "group flex items-center gap-4 p-5 rounded-[1.5rem] border-2 text-left transition-all duration-200",
+                      "group flex items-center gap-4 p-4 md:p-5 rounded-[1.5rem] border-2 text-left transition-all duration-200",
                       answers[currentQuestion] === option.key 
                         ? "bg-primary/5 border-primary shadow-md shadow-red-50" 
                         : "bg-slate-50/50 border-transparent hover:border-slate-200 hover:bg-white"
                     )}
                   >
                     <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm transition-all",
+                      "w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-black text-xs md:text-sm transition-all flex-shrink-0",
                       answers[currentQuestion] === option.key 
                         ? "bg-primary text-white" 
                         : "bg-white text-slate-400 group-hover:text-slate-700 border border-slate-200"
@@ -164,8 +206,8 @@ export default function TakeExam() {
                       {option.key}
                     </div>
                     <span className={cn(
-                      "font-bold text-lg",
-                      answers[currentQuestion] === option.key ? "text-primary" : "text-slate-600 group-hover:text-slate-900"
+                      "font-bold text-base md:text-lg",
+                      answers[currentQuestion] === option.key ? "text-primary transition-all scale-[1.01]" : "text-slate-600 group-hover:text-slate-900"
                     )}>
                       {option.text}
                     </span>
@@ -175,24 +217,24 @@ export default function TakeExam() {
             </motion.div>
           </AnimatePresence>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-4">
             <button 
               disabled={currentQuestion === 0}
-              onClick={() => setCurrentQuestion(prev => prev - 1)}
-              className="flex items-center gap-2 px-6 py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-all"
+              onClick={() => handleNavigate(currentQuestion - 1)}
+              className="flex items-center gap-2 px-5 md:px-6 py-3 md:py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 text-sm md:text-base"
             >
               <ChevronLeft className="w-5 h-5" />
-              Sebelumnya
+              <span className="hidden xs:inline">Sebelumnya</span>
             </button>
-            <div className="flex items-center gap-2 text-slate-400 font-black text-sm">
+            <div className="flex items-center gap-2 text-slate-400 font-black text-[10px] md:text-sm">
               SOAL {currentQuestion + 1} DARI {questions.length}
             </div>
             <button 
               disabled={currentQuestion === questions.length - 1}
-              onClick={() => setCurrentQuestion(prev => prev + 1)}
-              className="flex items-center gap-2 px-6 py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-all group"
+              onClick={() => handleNavigate(currentQuestion + 1)}
+              className="flex items-center gap-2 px-5 md:px-6 py-3 md:py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-all group active:scale-95 text-sm md:text-base"
             >
-              Berikutnya
+              <span className="hidden xs:inline">Berikutnya</span>
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
@@ -205,13 +247,13 @@ export default function TakeExam() {
               <LayoutGrid className="w-4 h-4 text-slate-400" />
               <h3 className="font-bold text-slate-900 text-sm">Navigasi Soal</h3>
             </div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-4 gap-3">
               {questions.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => setCurrentQuestion(i)}
+                  onClick={() => handleNavigate(i)}
                   className={cn(
-                    "h-10 rounded-xl font-black text-xs transition-all border-2 flex items-center justify-center",
+                    "h-10 rounded-xl font-black text-xs transition-all border-2 flex items-center justify-center active:scale-90",
                     currentQuestion === i 
                       ? "bg-primary border-primary text-white shadow-lg shadow-red-100" 
                       : answers[i] 

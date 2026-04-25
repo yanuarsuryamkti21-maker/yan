@@ -24,8 +24,15 @@ interface Question {
 
 export default function QuestionManagement() {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
+  const examsList = [
+    { id: '101', title: 'Produktif TKJ - Jaringan Dasar' },
+    { id: '102', title: 'Administrasi Sistem Jaringan' },
+    { id: '103', title: 'Dasar Desain Grafis' }
+  ];
+
   // Sample Data
   const [questions, setQuestions] = useState<Question[]>([
     {
@@ -44,7 +51,7 @@ export default function QuestionManagement() {
   ]);
 
   const [newQuestion, setNewQuestion] = useState({
-    examId: '',
+    examId: '101',
     questionText: '',
     optionA: '',
     optionB: '',
@@ -55,10 +62,12 @@ export default function QuestionManagement() {
 
   const handleAddQuestion = (e: React.FormEvent) => {
     e.preventDefault();
+    const selectedExam = examsList.find(ex => ex.id === newQuestion.examId);
+    
     const question: Question = {
       id: Math.random().toString(36).substr(2, 9),
       examId: newQuestion.examId,
-      examTitle: 'Ujian Baru', // Simplified
+      examTitle: selectedExam?.title || 'Ujian Tidak Diketahui',
       questionText: newQuestion.questionText,
       options: [
         { key: 'A', text: newQuestion.optionA },
@@ -72,7 +81,7 @@ export default function QuestionManagement() {
     setQuestions([question, ...questions]);
     setShowAddForm(false);
     setNewQuestion({
-      examId: '',
+      examId: '101',
       questionText: '',
       optionA: '',
       optionB: '',
@@ -104,13 +113,13 @@ export default function QuestionManagement() {
           <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Total Soal</p>
           <p className="text-xl font-bold text-slate-800">{questions.length}</p>
         </div>
-        <div className="stat-card-polished">
-          <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Bank Soal Terpakai</p>
-          <p className="text-xl font-bold text-slate-800">85%</p>
+        <div className="stat-card-polished text-emerald-600 bg-emerald-50/20 border-emerald-100">
+          <p className="text-[10px] text-emerald-600 font-bold uppercase mb-1">Aktif</p>
+          <p className="text-xl font-bold text-emerald-700">{questions.length}</p>
         </div>
-        <div className="stat-card-polished border-emerald-100 bg-emerald-50/30">
-          <p className="text-[10px] text-emerald-600 font-bold uppercase mb-1">Soal Baru (Bulan Ini)</p>
-          <p className="text-xl font-bold text-emerald-700">+12</p>
+        <div className="stat-card-polished border-blue-100 bg-blue-50/20">
+          <p className="text-[10px] text-blue-600 font-bold uppercase mb-1">Total Ujian</p>
+          <p className="text-xl font-bold text-blue-700">{examsList.length}</p>
         </div>
       </div>
 
@@ -138,51 +147,70 @@ export default function QuestionManagement() {
           <motion.div 
             layout
             key={q.id} 
-            className="card-polished"
+            className="card-polished transition-all"
           >
-            <div className="p-5 flex gap-6">
-              <div className="flex-1 space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase tabular-nums">ID: {q.id}</span>
-                  <span className="text-slate-200">•</span>
-                  <span className="text-xs font-bold text-primary">{q.examTitle}</span>
-                </div>
-                
-                <p className="font-semibold text-slate-800 leading-relaxed">{q.questionText}</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-2">
-                  {q.options.map((opt) => (
-                    <div 
-                      key={opt.key} 
-                      className={cn(
-                        "p-3 rounded-lg border flex items-center gap-3 text-sm transition-all",
-                        q.correctAnswer === opt.key 
-                          ? "bg-emerald-50 border-emerald-200 text-emerald-700 font-bold" 
-                          : "bg-slate-50 border-transparent text-slate-600"
-                      )}
-                    >
-                      <span className={cn(
-                        "w-6 h-6 flex items-center justify-center rounded-md font-black text-[10px] flex-shrink-0",
-                        q.correctAnswer === opt.key ? "bg-emerald-500 text-white" : "bg-white border border-slate-200 text-slate-400"
-                      )}>
-                        {opt.key}
-                      </span>
-                      <span className="truncate">{opt.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="p-5">
+              <div className="flex gap-6 items-start">
+                <div className="flex-1 space-y-4 cursor-pointer" onClick={() => setExpandedId(expandedId === q.id ? null : q.id)}>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase tabular-nums">ID: {q.id}</span>
+                    <span className="text-slate-200">•</span>
+                    <span className="text-xs font-bold text-primary">{q.examTitle}</span>
+                  </div>
+                  
+                  <p className="font-semibold text-slate-800 leading-relaxed text-sm md:text-base">{q.questionText}</p>
+                  
+                  <AnimatePresence>
+                    {expandedId === q.id && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-2 pt-4">
+                          {q.options.map((opt) => (
+                            <div 
+                              key={opt.key} 
+                              className={cn(
+                                "p-3 rounded-lg border flex items-center gap-3 text-sm transition-all",
+                                q.correctAnswer === opt.key 
+                                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 font-bold" 
+                                  : "bg-slate-50 border-transparent text-slate-600"
+                              )}
+                            >
+                              <span className={cn(
+                                "w-6 h-6 flex items-center justify-center rounded-md font-black text-[10px] flex-shrink-0",
+                                q.correctAnswer === opt.key ? "bg-emerald-500 text-white" : "bg-white border border-slate-200 text-slate-400"
+                              )}>
+                                {opt.key}
+                              </span>
+                              <span className="truncate">{opt.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-              <div className="flex flex-col gap-2">
-                <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors rounded-lg hover:bg-slate-50">
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => setQuestions(questions.filter(prev => prev.id !== q.id))}
-                  className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                  {!expandedId && (
+                    <div className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+                      Klik untuk melihat detail & kunci jawaban
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors rounded-lg hover:bg-slate-50">
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => setQuestions(questions.filter(prev => prev.id !== q.id))}
+                    className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -192,7 +220,7 @@ export default function QuestionManagement() {
       {/* Add Form Modal */}
       <AnimatePresence>
         {showAddForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -202,7 +230,7 @@ export default function QuestionManagement() {
               <div className="p-6 px-8 border-b border-border-subtle flex justify-between items-center bg-slate-50">
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">Tambah Soal Baru</h2>
-                  <p className="text-xs text-slate-500 font-medium">Isi detail pertanyaan di bawah ini.</p>
+                  <p className="text-xs text-slate-500 font-medium tracking-tight">Manajemen Bank Soal SMK Prima Unggul</p>
                 </div>
                 <button 
                   onClick={() => setShowAddForm(false)}
@@ -212,8 +240,22 @@ export default function QuestionManagement() {
                 </button>
               </div>
 
-              <form onSubmit={handleAddQuestion} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+              <form onSubmit={handleAddQuestion} className="p-6 md:p-8 space-y-6 max-h-[80vh] overflow-y-auto">
                 <div className="space-y-4">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Pilih Ujian</label>
+                    <select 
+                      required
+                      value={newQuestion.examId}
+                      onChange={(e) => setNewQuestion({...newQuestion, examId: e.target.value})}
+                      className="w-full h-11 px-4 bg-slate-50 border border-border-subtle rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-primary/5 outline-none transition-all appearance-none"
+                    >
+                      {examsList.map(ex => (
+                        <option key={ex.id} value={ex.id}>{ex.title}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div>
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Teks Pertanyaan</label>
                     <textarea 

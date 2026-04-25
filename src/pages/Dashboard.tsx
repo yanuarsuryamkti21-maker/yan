@@ -46,9 +46,9 @@ export default function Dashboard() {
             
             <div className="divide-y divide-border-subtle">
               {[
-                { title: 'Matematika - Ujian Akhir Semester', duration: 90, guru: 'Dra. Sumarni', status: 'tersedia' },
-                { title: 'Administrasi Infrastruktur Jaringan', duration: 120, guru: 'Bpk. Ridwan', status: 'tersedia' },
-                { title: 'Bahasa Inggris - Listening Section', duration: 45, guru: 'Ms. Diana', status: 'menunggu', time: 'Mulai 13:00 WIB' }
+                { id: '1', title: 'Matematika - Ujian Akhir Semester', duration: 90, guru: 'Dra. Sumarni', status: 'tersedia' },
+                { id: '2', title: 'Administrasi Infrastruktur Jaringan', duration: 120, guru: 'Bpk. Ridwan', status: 'tersedia' },
+                { id: '3', title: 'Bahasa Inggris - Listening Section', duration: 45, guru: 'Ms. Diana', status: 'menunggu', time: 'Mulai 13:00 WIB' }
               ].map((exam, i) => (
                 <div key={i} className="p-5 flex justify-between items-center hover:bg-slate-50 transition-colors">
                   <div>
@@ -59,7 +59,14 @@ export default function Dashboard() {
                     {exam.status === 'tersedia' ? (
                       <>
                         <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[11px] font-bold">Tersedia</span>
-                        <button className="btn-primary-polished">Kerjakan</button>
+                        {(user?.role === 'admin' || user?.role === 'guru') ? (
+                          <div className="flex gap-2">
+                            <Link to="/app/admin/questions" className="text-[11px] font-bold text-slate-400 hover:text-primary transition-colors underline underline-offset-4">Kelola</Link>
+                            <Link to={`/app/ujian/${exam.id}`} className="btn-primary-polished no-underline inline-block text-center py-1.5 px-4 text-[12px]">Preview</Link>
+                          </div>
+                        ) : (
+                          <Link to={`/app/ujian/${exam.id}`} className="btn-primary-polished no-underline inline-block text-center">Kerjakan</Link>
+                        )}
                       </>
                     ) : (
                       <>

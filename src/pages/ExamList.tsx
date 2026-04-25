@@ -98,7 +98,7 @@ export default function ExamList() {
               </p>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row items-center gap-4">
               {exam.isCompleted ? (
                 <div className="text-right mr-4">
                   <p className="text-[10px] text-slate-400 font-bold uppercase">Nilai Anda</p>
@@ -106,23 +106,39 @@ export default function ExamList() {
                 </div>
               ) : null}
 
-              {exam.status === 'upcoming' ? (
-                <button disabled className="px-6 py-3 bg-slate-50 text-slate-400 rounded-2xl text-sm font-bold cursor-not-allowed">
-                  Mendatang
-                </button>
-              ) : exam.isCompleted ? (
-                <button className="px-6 py-3 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-emerald-100 transition-all">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Lihat Hasil
-                </button>
+              {(user?.role === 'admin' || user?.role === 'guru') ? (
+                <div className="flex gap-2">
+                  <Link 
+                    to="/app/admin/questions"
+                    className="px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-slate-200 transition-all"
+                  >
+                    Manage Soal
+                  </Link>
+                  <button className="px-6 py-3 bg-slate-800 text-white rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-black transition-all">
+                    Edit Ujian
+                  </button>
+                </div>
               ) : (
-                <Link 
-                  to={`/app/ujian/${exam.id}`}
-                  className="px-8 py-3 bg-primary text-white rounded-2xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-red-200 hover:bg-primary-hover transition-all group"
-                >
-                  Kerjakan
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                <>
+                  {exam.status === 'upcoming' ? (
+                    <button disabled className="px-6 py-3 bg-slate-50 text-slate-400 rounded-2xl text-sm font-bold cursor-not-allowed">
+                      Mendatang
+                    </button>
+                  ) : exam.isCompleted ? (
+                    <button className="px-6 py-3 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-emerald-100 transition-all">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Lihat Hasil
+                    </button>
+                  ) : (
+                    <Link 
+                      to={`/app/ujian/${exam.id}`}
+                      className="px-8 py-3 bg-primary text-white rounded-2xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-red-200 hover:bg-primary-hover transition-all group"
+                    >
+                      Kerjakan
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  )}
+                </>
               )}
             </div>
           </motion.div>
